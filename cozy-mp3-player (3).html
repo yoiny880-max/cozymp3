@@ -1,0 +1,2762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy 16-bit MP3 Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(180deg, 
+                #FF6B6B 0%,      /* Deep sunset red */
+                #FF8E53 10%,     /* Orange */
+                #FFA07A 20%,     /* Light coral */
+                #FFB88C 30%,     /* Peach */
+                #87CEEB 50%,     /* Sky blue */
+                #4A90E2 60%,     /* Ocean blue */
+                #2E5F8F 80%,     /* Deep ocean */
+                #1A4D7A 100%);   /* Darkest ocean */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Sun */
+        .sun {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, #FFD700 0%, #FF8C00 50%, #FF6347 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 60px rgba(255, 215, 0, 0.8),
+                0 0 120px rgba(255, 140, 0, 0.5);
+            z-index: 0;
+            animation: sun-pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes sun-pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+
+        /* Sun reflection on water */
+        .sun-reflection {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 200px;
+            background: linear-gradient(180deg, 
+                rgba(255, 215, 0, 0.6) 0%,
+                rgba(255, 140, 0, 0.4) 50%,
+                transparent 100%);
+            filter: blur(20px);
+            z-index: 0;
+        }
+
+        /* Ocean water layers */
+        body::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, 
+                rgba(74, 144, 226, 0.8) 0%, 
+                rgba(46, 95, 143, 0.9) 50%, 
+                rgba(26, 77, 122, 0.95) 100%);
+            z-index: 0;
+        }
+
+        /* Horizon line */
+        body::after {
+            content: '';
+            position: absolute;
+            top: 60%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%,
+                rgba(255, 140, 0, 0.5) 20%,
+                rgba(255, 140, 0, 0.8) 50%,
+                rgba(255, 140, 0, 0.5) 80%,
+                transparent 100%);
+            z-index: 0;
+        }
+
+        /* Wave animations */
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100px;
+            z-index: 1;
+        }
+
+        .wave-1 {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 100'%3E%3Cpath d='M0,50 Q300,20 600,50 T1200,50 L1200,100 L0,100 Z' fill='rgba(255,255,255,0.1)'/%3E%3C/svg%3E");
+            background-size: 1200px 100px;
+            animation: wave-motion 15s linear infinite;
+            opacity: 0.3;
+            bottom: 35%;
+        }
+
+        .wave-2 {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 100'%3E%3Cpath d='M0,60 Q300,30 600,60 T1200,60 L1200,100 L0,100 Z' fill='rgba(255,255,255,0.15)'/%3E%3C/svg%3E");
+            background-size: 1200px 100px;
+            animation: wave-motion 12s linear infinite reverse;
+            opacity: 0.4;
+            bottom: 25%;
+        }
+
+        .wave-3 {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,70 Q300,40 600,70 T1200,70 L1200,120 L0,120 Z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E");
+            background-size: 1200px 120px;
+            animation: wave-motion 18s linear infinite;
+            opacity: 0.5;
+            bottom: 15%;
+        }
+
+        .wave-4 {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 140'%3E%3Cpath d='M0,80 Q300,50 600,80 T1200,80 L1200,140 L0,140 Z' fill='rgba(255,255,255,0.25)'/%3E%3C/svg%3E");
+            background-size: 1200px 140px;
+            animation: wave-motion 20s linear infinite reverse;
+            opacity: 0.6;
+            bottom: 5%;
+        }
+
+        .wave-5 {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 160'%3E%3Cpath d='M0,90 Q300,60 600,90 T1200,90 L1200,160 L0,160 Z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E");
+            background-size: 1200px 160px;
+            animation: wave-motion 22s linear infinite;
+            opacity: 0.7;
+            bottom: 0;
+        }
+
+        @keyframes wave-motion {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Seagulls */
+        .seagull {
+            position: absolute;
+            width: 30px;
+            height: 3px;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .seagull::before,
+        .seagull::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 3px;
+            background: rgba(80, 80, 80, 0.7);
+            border-radius: 50%;
+        }
+
+        .seagull::before {
+            left: 0;
+            transform: rotate(-25deg);
+        }
+
+        .seagull::after {
+            right: 0;
+            transform: rotate(25deg);
+        }
+
+        .seagull-1 { 
+            top: 20%; 
+            left: 15%; 
+            animation: fly-seagull 25s linear infinite; 
+        }
+        
+        .seagull-2 { 
+            top: 25%; 
+            left: 30%; 
+            animation: fly-seagull 30s linear infinite 3s; 
+        }
+        
+        .seagull-3 { 
+            top: 18%; 
+            right: 20%; 
+            animation: fly-seagull 28s linear infinite 6s; 
+        }
+
+        .seagull-4 { 
+            top: 30%; 
+            left: 60%; 
+            animation: fly-seagull 32s linear infinite 9s; 
+        }
+
+        @keyframes fly-seagull {
+            0% { 
+                transform: translateX(0) translateY(0); 
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% { 
+                transform: translateX(100vw) translateY(-50px); 
+                opacity: 0;
+            }
+        }
+
+        /* Clouds near horizon */
+        .ocean-cloud {
+            position: absolute;
+            z-index: 0;
+        }
+
+        .ocean-cloud-shape {
+            width: 120px;
+            height: 35px;
+            background: rgba(255, 200, 150, 0.4);
+            border-radius: 50px;
+            position: relative;
+        }
+
+        .ocean-cloud-shape::before {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 45px;
+            background: rgba(255, 200, 150, 0.4);
+            border-radius: 50%;
+            top: -22px;
+            left: 20px;
+        }
+
+        .ocean-cloud-shape::after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 40px;
+            background: rgba(255, 200, 150, 0.4);
+            border-radius: 50%;
+            top: -18px;
+            right: 20px;
+        }
+
+        .ocean-cloud-1 { 
+            top: 15%; 
+            left: -150px; 
+            animation: drift-ocean 60s linear infinite; 
+        }
+        
+        .ocean-cloud-2 { 
+            top: 22%; 
+            left: -150px; 
+            animation: drift-ocean 70s linear infinite 10s; 
+        }
+
+        @keyframes drift-ocean {
+            0% { transform: translateX(0); opacity: 0; }
+            5% { opacity: 0.4; }
+            95% { opacity: 0.4; }
+            100% { transform: translateX(calc(100vw + 150px)); opacity: 0; }
+        }
+
+        /* Orange leaves container */
+        .leaves-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 2;
+            display: none; /* Hidden for ocean scene */
+        }
+
+        .leaf {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes sway {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(30px);
+            }
+        }
+
+        .player-container {
+            background: linear-gradient(135deg, 
+                rgba(255, 228, 196, 0.5) 0%,    /* Warm bisque */
+                rgba(255, 218, 185, 0.5) 50%,   /* Peach puff */
+                rgba(250, 235, 215, 0.5) 100%); /* Antique white */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+            overflow: visible;
+            /* 16-bit staircase border effect */
+            box-shadow: 
+                0 0 0 2px rgba(160, 82, 45, 0.8),
+                0 0 0 4px rgba(205, 133, 63, 0.7),
+                4px 4px 0 4px rgba(139, 69, 19, 0.7),
+                8px 8px 0 4px rgba(101, 67, 33, 0.6),
+                12px 12px 0 4px rgba(80, 50, 20, 0.5);
+        }
+
+        .player-header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 30px;
+            color: #8B4513;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .load-disk-btn {
+            background: linear-gradient(180deg, 
+                rgba(218, 165, 32, 0.9) 0%, 
+                rgba(184, 134, 11, 0.9) 100%);
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #2d1f0e;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 
+                0 0 0 2px rgba(139, 69, 19, 0.8),
+                4px 4px 0 0 rgba(101, 67, 33, 0.7);
+            transition: all 0.1s;
+            position: relative;
+            z-index: 10;
+        }
+
+        .load-disk-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(238, 185, 52, 0.95) 0%, 
+                rgba(204, 154, 31, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(139, 69, 19, 0.8),
+                3px 3px 0 0 rgba(101, 67, 33, 0.7);
+        }
+
+        .load-disk-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.8);
+        }
+
+        .playlist {
+            background: rgba(255, 248, 220, 0.7);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(205, 133, 63, 0.8);
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            box-shadow: inset 2px 2px 0 rgba(139, 69, 19, 0.2);
+        }
+
+        .playlist::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        .playlist::-webkit-scrollbar-track {
+            background: rgba(255, 228, 196, 0.5);
+        }
+
+        .playlist::-webkit-scrollbar-thumb {
+            background: rgba(205, 133, 63, 0.8);
+            border: 2px solid rgba(255, 228, 196, 0.5);
+        }
+
+        .track-item {
+            padding: 12px;
+            border-bottom: 2px solid rgba(210, 180, 140, 0.4);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 8px;
+        }
+
+        .track-item:hover {
+            background: rgba(255, 239, 213, 0.6);
+        }
+
+        .track-item.active {
+            background: rgba(255, 218, 185, 0.8);
+        }
+
+        .track-item::before {
+            content: '▶';
+            margin-right: 12px;
+            color: #DAA520;
+            font-size: 10px;
+        }
+
+        .track-item.active::before {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .track-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #654321;
+        }
+
+        .now-playing {
+            background: rgba(255, 248, 220, 0.7);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(205, 133, 63, 0.8);
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .now-playing-title {
+            font-size: 10px;
+            color: #8B4513;
+            margin-bottom: 8px;
+        }
+
+        .now-playing-track {
+            font-size: 8px;
+            color: #A0522D;
+        }
+
+        .visualizer {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 80px;
+            background: rgba(255, 248, 220, 0.6);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(205, 133, 63, 0.8);
+            padding: 8px;
+            margin-bottom: 20px;
+            gap: 4px;
+        }
+
+        .visualizer-bar {
+            flex: 1;
+            background: linear-gradient(180deg, 
+                rgba(218, 165, 32, 0.9) 0%, 
+                rgba(184, 134, 11, 0.9) 100%);
+            transition: height 0.1s ease;
+            min-height: 8px;
+            box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.6);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .control-btn {
+            background: linear-gradient(180deg, 
+                rgba(222, 184, 135, 0.9) 0%, 
+                rgba(210, 180, 140, 0.9) 100%);
+            border: none;
+            padding: 12px 16px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #3d2817;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(160, 82, 45, 0.8),
+                3px 3px 0 0 rgba(139, 69, 19, 0.7);
+            transition: all 0.1s;
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(232, 204, 155, 0.95) 0%, 
+                rgba(220, 190, 150, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(160, 82, 45, 0.8),
+                2px 2px 0 0 rgba(139, 69, 19, 0.7);
+        }
+
+        .control-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 2px rgba(160, 82, 45, 0.8);
+        }
+
+        .volume-container {
+            background: rgba(255, 248, 220, 0.7);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(205, 133, 63, 0.8);
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .volume-label {
+            font-size: 8px;
+            color: #8B4513;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .exp-bar-container {
+            background: rgba(255, 228, 196, 0.6);
+            height: 24px;
+            border: 2px solid rgba(160, 82, 45, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .exp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, 
+                rgba(255, 215, 0, 0.95) 0%, 
+                rgba(255, 237, 78, 0.95) 50%, 
+                rgba(255, 215, 0, 0.95) 100%);
+            width: 70%;
+            transition: width 0.2s;
+            position: relative;
+            box-shadow: inset 0 -4px 0 rgba(184, 134, 11, 0.4);
+        }
+
+        .exp-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+        }
+
+        .volume-slider {
+            width: 100%;
+            height: 24px;
+            opacity: 0;
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .time-display {
+            font-size: 8px;
+            color: #A0522D;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #CD853F;
+            font-size: 8px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Crossword Minigame */
+        .crossword-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 3px solid rgba(205, 133, 63, 0.8);
+        }
+
+        .crossword-header {
+            text-align: center;
+            margin-bottom: 16px;
+            color: #8B4513;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .crossword-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 16px;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .crossword-cell {
+            aspect-ratio: 1;
+            border: 2px solid rgba(139, 69, 19, 0.6);
+            background: rgba(255, 248, 220, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .crossword-cell:hover {
+            background: rgba(255, 239, 213, 0.9);
+            transform: scale(1.05);
+        }
+
+        .crossword-cell.blocked {
+            background: rgba(101, 67, 33, 0.8);
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .crossword-cell.blocked:hover {
+            transform: none;
+        }
+
+        .crossword-cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #654321;
+            outline: none;
+        }
+
+        .crossword-cell.correct {
+            background: rgba(144, 238, 144, 0.6);
+            animation: correct-flash 0.5s;
+        }
+
+        @keyframes correct-flash {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .crossword-cell .cell-number {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 6px;
+            color: #8B4513;
+        }
+
+        .crossword-clues {
+            background: rgba(255, 248, 220, 0.7);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(205, 133, 63, 0.8);
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .crossword-clues h3 {
+            font-size: 8px;
+            color: #8B4513;
+            margin-bottom: 8px;
+        }
+
+        .crossword-clue {
+            font-size: 7px;
+            color: #654321;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .check-crossword-btn {
+            background: linear-gradient(180deg, 
+                rgba(144, 238, 144, 0.9) 0%, 
+                rgba(102, 205, 102, 0.9) 100%);
+            border: none;
+            padding: 10px 16px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            color: #2d4a3e;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            box-shadow: 
+                0 0 0 2px rgba(60, 120, 60, 0.8),
+                3px 3px 0 0 rgba(40, 90, 40, 0.7);
+            transition: all 0.1s;
+        }
+
+        .check-crossword-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(154, 248, 154, 0.95) 0%, 
+                rgba(112, 215, 112, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(60, 120, 60, 0.8),
+                2px 2px 0 0 rgba(40, 90, 40, 0.7);
+        }
+
+        .check-crossword-btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 2px rgba(60, 120, 60, 0.8);
+        }
+
+        /* Crossword container - positioned next to player */
+        .crossword-container {
+            background: linear-gradient(135deg, 
+                rgba(255, 228, 196, 0.5) 0%,
+                rgba(255, 218, 185, 0.5) 50%,
+                rgba(250, 235, 215, 0.5) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+            position: absolute;
+            top: 50%;
+            left: calc(100% + 30px);
+            transform: translateY(-50%) translateX(-150%);
+            z-index: 1;
+            box-shadow: 
+                0 0 0 2px rgba(160, 82, 45, 0.8),
+                0 0 0 4px rgba(205, 133, 63, 0.7),
+                4px 4px 0 4px rgba(139, 69, 19, 0.7),
+                8px 8px 0 4px rgba(101, 67, 33, 0.6),
+                12px 12px 0 4px rgba(80, 50, 20, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+
+        .crossword-container.active {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .crossword-toggle-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: -80px;
+            background: linear-gradient(180deg, 
+                rgba(147, 112, 219, 0.9) 0%, 
+                rgba(123, 92, 199, 0.9) 100%);
+            border: none;
+            padding: 12px 16px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            color: #2d1f3e;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(75, 46, 131, 0.8),
+                3px 3px 0 0 rgba(55, 26, 111, 0.7);
+            transition: all 0.1s;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            z-index: 100;
+        }
+
+        .crossword-toggle-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(167, 132, 239, 0.95) 0%, 
+                rgba(143, 112, 219, 0.95) 100%);
+            transform: translateY(-50%) translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(75, 46, 131, 0.8),
+                2px 2px 0 0 rgba(55, 26, 111, 0.7);
+        }
+
+        .crossword-toggle-btn:active {
+            transform: translateY(-50%) translate(3px, 3px);
+            box-shadow: 0 0 0 2px rgba(75, 46, 131, 0.8);
+        }
+
+        .close-crossword-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(180deg, 
+                rgba(255, 99, 71, 0.9) 0%, 
+                rgba(220, 79, 51, 0.9) 100%);
+            border: none;
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            color: #3e1f1f;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(139, 0, 0, 0.8),
+                2px 2px 0 0 rgba(100, 0, 0, 0.7);
+            transition: all 0.1s;
+        }
+
+        .close-crossword-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(255, 119, 91, 0.95) 0%, 
+                rgba(240, 99, 71, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(139, 0, 0, 0.8),
+                1px 1px 0 0 rgba(100, 0, 0, 0.7);
+        }
+
+        .close-crossword-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.8);
+        }
+
+        /* Wrapper to position player and crossword */
+        .game-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 1100px) {
+            .crossword-container {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translateY(-50%) translateX(-50%) scale(0.8);
+            }
+
+            .crossword-container.active {
+                transform: translateY(-50%) translateX(-50%) scale(1);
+            }
+
+            .crossword-toggle-btn {
+                right: -70px;
+            }
+        }
+
+        /* Minimize UI button */
+        .minimize-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(180deg, 
+                rgba(100, 149, 237, 0.9) 0%, 
+                rgba(70, 119, 207, 0.9) 100%);
+            border: none;
+            padding: 8px 16px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            line-height: 1;
+            color: #1f2e3e;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(25, 60, 120, 0.8),
+                2px 2px 0 0 rgba(15, 40, 90, 0.7);
+            transition: all 0.1s;
+            z-index: 100;
+        }
+
+        .minimize-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(120, 169, 255, 0.95) 0%, 
+                rgba(90, 139, 227, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(25, 60, 120, 0.8),
+                1px 1px 0 0 rgba(15, 40, 90, 0.7);
+        }
+
+        .minimize-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 2px rgba(25, 60, 120, 0.8);
+        }
+
+        .player-container.minimized {
+            transform: scale(0.1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .restore-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(180deg, 
+                rgba(100, 149, 237, 0.9) 0%, 
+                rgba(70, 119, 207, 0.9) 100%);
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #1f2e3e;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(25, 60, 120, 0.8),
+                4px 4px 0 0 rgba(15, 40, 90, 0.7);
+            transition: all 0.3s;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0);
+        }
+
+        .restore-btn.visible {
+            opacity: 1;
+            pointer-events: all;
+            transform: scale(1);
+        }
+
+        .restore-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(120, 169, 255, 0.95) 0%, 
+                rgba(90, 139, 227, 0.95) 100%);
+            transform: scale(1.05) translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(25, 60, 120, 0.8),
+                3px 3px 0 0 rgba(15, 40, 90, 0.7);
+        }
+
+        .restore-btn:active {
+            transform: scale(1) translate(4px, 4px);
+            box-shadow: 0 0 0 2px rgba(25, 60, 120, 0.8);
+        }
+
+        /* Ocean Sounds Container */
+        .ocean-sounds-toggle-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: -80px;
+            background: linear-gradient(180deg, 
+                rgba(72, 201, 176, 0.9) 0%, 
+                rgba(52, 181, 156, 0.9) 100%);
+            border: none;
+            padding: 12px 16px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            color: #1f3e3e;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(30, 100, 90, 0.8),
+                3px 3px 0 0 rgba(20, 70, 60, 0.7);
+            transition: all 0.1s;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            z-index: 100;
+        }
+
+        .ocean-sounds-toggle-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(92, 221, 196, 0.95) 0%, 
+                rgba(72, 201, 176, 0.95) 100%);
+            transform: translateY(-50%) translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(30, 100, 90, 0.8),
+                2px 2px 0 0 rgba(20, 70, 60, 0.7);
+        }
+
+        .ocean-sounds-toggle-btn:active {
+            transform: translateY(-50%) translate(3px, 3px);
+            box-shadow: 0 0 0 2px rgba(30, 100, 90, 0.8);
+        }
+
+        .ocean-sounds-container {
+            background: linear-gradient(135deg, 
+                rgba(72, 201, 176, 0.5) 0%,
+                rgba(52, 181, 156, 0.5) 50%,
+                rgba(32, 161, 136, 0.5) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+            position: absolute;
+            top: 50%;
+            right: calc(100% + 30px);
+            transform: translateY(-50%) translateX(150%);
+            z-index: 1;
+            box-shadow: 
+                0 0 0 2px rgba(30, 100, 90, 0.8),
+                0 0 0 4px rgba(52, 181, 156, 0.7),
+                -4px 4px 0 4px rgba(20, 70, 60, 0.7),
+                -8px 8px 0 4px rgba(15, 50, 45, 0.6),
+                -12px 12px 0 4px rgba(10, 30, 25, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+
+        .ocean-sounds-container.active {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .ocean-sounds-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1f4a4a;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .ocean-sound-option {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(30, 100, 90, 0.8);
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ocean-sound-option:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateX(-4px);
+        }
+
+        .ocean-sound-option.active {
+            background: rgba(144, 238, 144, 0.7);
+            border-color: rgba(60, 120, 60, 0.8);
+        }
+
+        .ocean-sound-name {
+            font-size: 8px;
+            color: #2d4a4a;
+            flex: 1;
+        }
+
+        .ocean-sound-icon {
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .ocean-volume-control {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid rgba(30, 100, 90, 0.5);
+        }
+
+        .ocean-volume-label {
+            font-size: 8px;
+            color: #1f4a4a;
+            margin-bottom: 8px;
+        }
+
+        .ocean-volume-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(30, 100, 90, 0.3);
+            outline: none;
+            appearance: none;
+        }
+
+        .ocean-volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: rgba(72, 201, 176, 0.9);
+            border: 2px solid rgba(30, 100, 90, 0.8);
+            cursor: pointer;
+        }
+
+        .ocean-volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: rgba(72, 201, 176, 0.9);
+            border: 2px solid rgba(30, 100, 90, 0.8);
+            cursor: pointer;
+        }
+
+        .close-ocean-sounds-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(180deg, 
+                rgba(255, 99, 71, 0.9) 0%, 
+                rgba(220, 79, 51, 0.9) 100%);
+            border: none;
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            color: #3e1f1f;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(139, 0, 0, 0.8),
+                2px 2px 0 0 rgba(100, 0, 0, 0.7);
+            transition: all 0.1s;
+        }
+
+        .close-ocean-sounds-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(255, 119, 91, 0.95) 0%, 
+                rgba(240, 99, 71, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(139, 0, 0, 0.8),
+                1px 1px 0 0 rgba(100, 0, 0, 0.7);
+        }
+
+        .close-ocean-sounds-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.8);
+        }
+
+        /* Timer/Alarm/Stopwatch Toggle Button */
+        .timer-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(180deg, 
+                rgba(255, 193, 7, 0.9) 0%, 
+                rgba(255, 152, 0, 0.9) 100%);
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #3e2f1f;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.8),
+                4px 4px 0 0 rgba(100, 60, 0, 0.7);
+            transition: all 0.1s;
+            z-index: 1000;
+        }
+
+        .timer-toggle-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(255, 213, 47, 0.95) 0%, 
+                rgba(255, 172, 20, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.8),
+                3px 3px 0 0 rgba(100, 60, 0, 0.7);
+        }
+
+        .timer-toggle-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 2px rgba(139, 90, 0, 0.8);
+        }
+
+        /* Floating Timer Widget */
+        .timer-widget {
+            position: fixed;
+            top: 100px;
+            right: 100px;
+            width: 320px;
+            background: linear-gradient(135deg, 
+                rgba(255, 243, 224, 0.95) 0%,
+                rgba(255, 228, 196, 0.95) 50%,
+                rgba(250, 235, 215, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.8),
+                0 0 0 4px rgba(255, 193, 7, 0.7),
+                4px 4px 0 4px rgba(100, 60, 0, 0.7),
+                8px 8px 0 4px rgba(80, 50, 0, 0.6),
+                12px 12px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            cursor: move;
+            display: none;
+        }
+
+        .timer-widget.active {
+            display: block;
+        }
+
+        .timer-widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(139, 90, 0, 0.5);
+            cursor: move;
+        }
+
+        .timer-widget-title {
+            font-size: 10px;
+            color: #8B5A00;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .close-timer-btn {
+            background: linear-gradient(180deg, 
+                rgba(255, 99, 71, 0.9) 0%, 
+                rgba(220, 79, 51, 0.9) 100%);
+            border: none;
+            padding: 6px 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            color: #3e1f1f;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(139, 0, 0, 0.8),
+                2px 2px 0 0 rgba(100, 0, 0, 0.7);
+            transition: all 0.1s;
+        }
+
+        .close-timer-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(255, 119, 91, 0.95) 0%, 
+                rgba(240, 99, 71, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(139, 0, 0, 0.8),
+                1px 1px 0 0 rgba(100, 0, 0, 0.7);
+        }
+
+        .close-timer-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.8);
+        }
+
+        .timer-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .timer-tab {
+            flex: 1;
+            background: rgba(255, 193, 7, 0.6);
+            border: 2px solid rgba(139, 90, 0, 0.6);
+            padding: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 7px;
+            color: #5a3d00;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .timer-tab:hover {
+            background: rgba(255, 213, 47, 0.8);
+        }
+
+        .timer-tab.active {
+            background: rgba(255, 193, 7, 0.9);
+            border-color: rgba(139, 90, 0, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .timer-content {
+            display: none;
+        }
+
+        .timer-content.active {
+            display: block;
+        }
+
+        .timer-display {
+            background: rgba(0, 0, 0, 0.7);
+            color: #FFD700;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 32px;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 3px solid rgba(139, 90, 0, 0.8);
+            letter-spacing: 4px;
+            word-break: keep-all;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .timer-control-btn {
+            flex: 1;
+            background: linear-gradient(180deg, 
+                rgba(144, 238, 144, 0.9) 0%, 
+                rgba(102, 205, 102, 0.9) 100%);
+            border: none;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 7px;
+            color: #2d4a3e;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(60, 120, 60, 0.8),
+                2px 2px 0 0 rgba(40, 90, 40, 0.7);
+            transition: all 0.1s;
+        }
+
+        .timer-control-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(154, 248, 154, 0.95) 0%, 
+                rgba(112, 215, 112, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(60, 120, 60, 0.8),
+                1px 1px 0 0 rgba(40, 90, 40, 0.7);
+        }
+
+        .timer-control-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 2px rgba(60, 120, 60, 0.8);
+        }
+
+        .timer-control-btn.stop {
+            background: linear-gradient(180deg, 
+                rgba(255, 99, 71, 0.9) 0%, 
+                rgba(220, 79, 51, 0.9) 100%);
+        }
+
+        .timer-control-btn.stop:hover {
+            background: linear-gradient(180deg, 
+                rgba(255, 119, 91, 0.95) 0%, 
+                rgba(240, 99, 71, 0.95) 100%);
+        }
+
+        .timer-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .timer-input-group label {
+            font-size: 7px;
+            color: #8B5A00;
+            min-width: 60px;
+        }
+
+        .timer-input-group input,
+        .timer-input-group select {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(139, 90, 0, 0.6);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            color: #5a3d00;
+        }
+
+        .timer-input-group input[type="number"] {
+            width: 60px;
+        }
+
+        .alarm-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .alarm-item {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid rgba(139, 90, 0, 0.6);
+            padding: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7px;
+            color: #5a3d00;
+        }
+
+        .delete-alarm-btn {
+            background: rgba(255, 99, 71, 0.8);
+            border: none;
+            padding: 4px 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 6px;
+            color: #3e1f1f;
+            cursor: pointer;
+        }
+
+        .lap-list {
+            max-height: 120px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            margin-top: 12px;
+            border: 2px solid rgba(139, 90, 0, 0.6);
+        }
+
+        .lap-item {
+            font-size: 7px;
+            color: #5a3d00;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(139, 90, 0, 0.3);
+        }
+
+        .lap-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Time and Date Display */
+        .time-display-widget {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, 
+                rgba(255, 228, 196, 0.8) 0%,
+                rgba(255, 218, 185, 0.8) 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 12px 16px;
+            border: 3px solid rgba(139, 69, 19, 0.7);
+            box-shadow: 
+                0 0 0 2px rgba(160, 82, 45, 0.6),
+                4px 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .current-time {
+            font-size: 10px;
+            color: #8B4513;
+            margin-bottom: 4px;
+        }
+
+        .current-day {
+            font-size: 7px;
+            color: #A0522D;
+        }
+
+        .date-display-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, 
+                rgba(255, 228, 196, 0.8) 0%,
+                rgba(255, 218, 185, 0.8) 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 12px 16px;
+            border: 3px solid rgba(139, 69, 19, 0.7);
+            box-shadow: 
+                0 0 0 2px rgba(160, 82, 45, 0.6),
+                4px 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            font-family: 'Press Start 2P', cursive;
+            text-align: right;
+        }
+
+        .current-date {
+            font-size: 9px;
+            color: #8B4513;
+        }
+
+        /* Sticky Note Maker */
+        .sticky-note-btn {
+            position: fixed;
+            top: 90px;
+            left: 30px;
+            background: linear-gradient(180deg, 
+                rgba(255, 235, 59, 0.9) 0%, 
+                rgba(255, 193, 7, 0.9) 100%);
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #5a4000;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.8),
+                4px 4px 0 0 rgba(100, 60, 0, 0.7);
+            transition: all 0.1s;
+            z-index: 1000;
+        }
+
+        .sticky-note-btn:hover {
+            background: linear-gradient(180deg, 
+                rgba(255, 245, 79, 0.95) 0%, 
+                rgba(255, 213, 47, 0.95) 100%);
+            transform: translate(1px, 1px);
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.8),
+                3px 3px 0 0 rgba(100, 60, 0, 0.7);
+        }
+
+        .sticky-note-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 2px rgba(139, 90, 0, 0.8);
+        }
+
+        /* Sticky Note */
+        .sticky-note {
+            position: fixed;
+            width: 250px;
+            min-height: 200px;
+            background: linear-gradient(135deg, 
+                #FFF59D 0%,
+                #FFEB3B 50%,
+                #FDD835 100%);
+            padding: 16px;
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.6),
+                4px 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 2500;
+            cursor: move;
+            transform: rotate(-2deg);
+            transition: transform 0.2s;
+        }
+
+        .sticky-note:hover {
+            transform: rotate(0deg);
+            box-shadow: 
+                0 0 0 2px rgba(139, 90, 0, 0.6),
+                8px 8px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .sticky-note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px dashed rgba(139, 90, 0, 0.4);
+            cursor: move;
+        }
+
+        .sticky-note-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            color: #5a4000;
+        }
+
+        .sticky-note-delete {
+            background: rgba(244, 67, 54, 0.8);
+            border: none;
+            padding: 4px 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 7px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+            transition: all 0.1s;
+        }
+
+        .sticky-note-delete:hover {
+            background: rgba(244, 67, 54, 1);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .sticky-note-delete:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .sticky-note-content {
+            width: 100%;
+            min-height: 150px;
+            background: transparent;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #3e2f1f;
+            resize: none;
+            outline: none;
+            line-height: 1.6;
+        }
+
+        .sticky-note-content::placeholder {
+            color: rgba(62, 47, 31, 0.4);
+            font-style: italic;
+        }
+
+        /* Color variations for sticky notes */
+        .sticky-note.yellow {
+            background: linear-gradient(135deg, #FFF59D 0%, #FFEB3B 50%, #FDD835 100%);
+        }
+
+        .sticky-note.pink {
+            background: linear-gradient(135deg, #F8BBD0 0%, #F48FB1 50%, #EC407A 100%);
+        }
+
+        .sticky-note.blue {
+            background: linear-gradient(135deg, #BBDEFB 0%, #90CAF9 50%, #64B5F6 100%);
+        }
+
+        .sticky-note.green {
+            background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 50%, #81C784 100%);
+        }
+
+        .sticky-note.purple {
+            background: linear-gradient(135deg, #E1BEE7 0%, #CE93D8 50%, #BA68C8 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Time and Date Display -->
+    <div class="time-display-widget">
+        <div class="current-time" id="currentTime">00:00:00</div>
+        <div class="current-day" id="currentDay">Monday</div>
+    </div>
+    
+    <div class="date-display-widget">
+        <div class="current-date" id="currentDate">Jan 1, 2024</div>
+    </div>
+    
+    <!-- Sun -->
+    <div class="sun"></div>
+    <div class="sun-reflection"></div>
+    
+    <!-- Clouds near horizon -->
+    <div class="ocean-cloud ocean-cloud-1"><div class="ocean-cloud-shape"></div></div>
+    <div class="ocean-cloud ocean-cloud-2"><div class="ocean-cloud-shape"></div></div>
+    
+    <!-- Seagulls -->
+    <div class="seagull seagull-1"></div>
+    <div class="seagull seagull-2"></div>
+    <div class="seagull seagull-3"></div>
+    <div class="seagull seagull-4"></div>
+    
+    <!-- Ocean waves -->
+    <div class="wave wave-1"></div>
+    <div class="wave wave-2"></div>
+    <div class="wave wave-3"></div>
+    <div class="wave wave-4"></div>
+    <div class="wave wave-5"></div>
+    
+    <!-- Timer Toggle Button -->
+    <button class="timer-toggle-btn" id="timerToggleBtn">⏰ Time Tools</button>
+    
+    <!-- Sticky Note Button -->
+    <button class="sticky-note-btn" id="stickyNoteBtn">📝 New Note</button>
+    
+    <!-- Floating Timer Widget -->
+    <div class="timer-widget" id="timerWidget">
+        <div class="timer-widget-header" id="timerWidgetHeader">
+            <div class="timer-widget-title">⏰ Time Tools</div>
+            <button class="close-timer-btn" id="closeTimerBtn">✕</button>
+        </div>
+        
+        <div class="timer-tabs">
+            <button class="timer-tab active" data-tab="timer">Timer</button>
+            <button class="timer-tab" data-tab="alarm">Alarm</button>
+            <button class="timer-tab" data-tab="stopwatch">Stopwatch</button>
+        </div>
+        
+        <!-- Timer Content -->
+        <div class="timer-content active" id="timerContent">
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            
+            <div class="timer-input-group">
+                <label>Minutes:</label>
+                <input type="number" id="timerMinutes" min="0" max="99" value="5">
+            </div>
+            
+            <div class="timer-input-group">
+                <label>Seconds:</label>
+                <input type="number" id="timerSeconds" min="0" max="59" value="0">
+            </div>
+            
+            <div class="timer-controls">
+                <button class="timer-control-btn" id="timerStart">Start</button>
+                <button class="timer-control-btn stop" id="timerReset">Reset</button>
+            </div>
+        </div>
+        
+        <!-- Alarm Content -->
+        <div class="timer-content" id="alarmContent">
+            <div class="timer-display" id="alarmDisplay">--:--</div>
+            
+            <div class="timer-input-group">
+                <label>Time:</label>
+                <input type="time" id="alarmTime" value="12:00">
+            </div>
+            
+            <div class="timer-input-group">
+                <label>Sound:</label>
+                <select id="alarmSound">
+                    <option value="beep">Beep</option>
+                    <option value="chime">Chime</option>
+                    <option value="bell">Bell</option>
+                </select>
+            </div>
+            
+            <div class="timer-controls">
+                <button class="timer-control-btn" id="alarmAdd">Add Alarm</button>
+            </div>
+            
+            <div class="alarm-list" id="alarmList"></div>
+        </div>
+        
+        <!-- Stopwatch Content -->
+        <div class="timer-content" id="stopwatchContent">
+            <div class="timer-display" id="stopwatchDisplay">00:00.00</div>
+            
+            <div class="timer-controls">
+                <button class="timer-control-btn" id="stopwatchStart">Start</button>
+                <button class="timer-control-btn" id="stopwatchLap">Lap</button>
+                <button class="timer-control-btn stop" id="stopwatchReset">Reset</button>
+            </div>
+            
+            <div class="lap-list" id="lapList"></div>
+        </div>
+    </div>
+    
+    <div class="game-wrapper">
+        <button class="restore-btn" id="restoreBtn">Restore Player</button>
+        
+        <div class="player-container" id="playerContainer">
+            <button class="minimize-btn" id="minimizeBtn">−</button>
+            
+            <div class="player-header">
+                ♪ Cozy MP3 Player ♪
+            </div>
+
+            <label for="fileInput" class="load-disk-btn">
+                Load Disk
+            </label>
+            <input type="file" id="fileInput" accept="audio/mp3,audio/mpeg" multiple>
+
+            <div class="now-playing">
+                <div class="now-playing-title">Now Playing:</div>
+                <div class="now-playing-track" id="nowPlayingTrack">No track loaded</div>
+            </div>
+
+            <div class="visualizer" id="visualizer">
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="prevBtn">◄◄</button>
+                <button class="control-btn" id="playPauseBtn">▶</button>
+                <button class="control-btn" id="nextBtn">►►</button>
+            </div>
+
+            <div class="volume-container">
+                <div class="volume-label">
+                    <span>Volume</span>
+                    <span id="volumeValue">70%</span>
+                </div>
+                <div class="exp-bar-container">
+                    <div class="exp-bar-fill" id="expBar"></div>
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                </div>
+                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+            </div>
+
+            <div class="playlist" id="playlist">
+                <div class="empty-state">
+                    Load some tracks to begin your journey...
+                </div>
+            </div>
+
+            <button class="crossword-toggle-btn" id="crosswordToggle">Crossword</button>
+            <button class="ocean-sounds-toggle-btn" id="oceanSoundsToggle">Ocean Sounds</button>
+        </div>
+
+        <!-- Ocean Sounds Container -->
+        <div class="ocean-sounds-container" id="oceanSoundsContainer">
+            <button class="close-ocean-sounds-btn" id="closeOceanSounds">✕</button>
+            
+            <div class="ocean-sounds-header">
+                🌊 Ocean Ambience 🌊
+            </div>
+            
+            <div class="ocean-sound-option" data-sound="waves">
+                <span class="ocean-sound-icon">🌊</span>
+                <span class="ocean-sound-name">Gentle Waves</span>
+            </div>
+            
+            <div class="ocean-sound-option" data-sound="storm">
+                <span class="ocean-sound-icon">⛈️</span>
+                <span class="ocean-sound-name">Ocean Storm</span>
+            </div>
+            
+            <div class="ocean-sound-option" data-sound="seagulls">
+                <span class="ocean-sound-icon">🦅</span>
+                <span class="ocean-sound-name">Waves + Seagulls</span>
+            </div>
+            
+            <div class="ocean-sound-option" data-sound="underwater">
+                <span class="ocean-sound-icon">🐠</span>
+                <span class="ocean-sound-name">Underwater Bubbles</span>
+            </div>
+            
+            <div class="ocean-sound-option" data-sound="beach">
+                <span class="ocean-sound-icon">🏖️</span>
+                <span class="ocean-sound-name">Beach Ambience</span>
+            </div>
+            
+            <div class="ocean-sound-option" data-sound="off">
+                <span class="ocean-sound-icon">🔇</span>
+                <span class="ocean-sound-name">Off</span>
+            </div>
+            
+            <div class="ocean-volume-control">
+                <div class="ocean-volume-label">Ocean Volume: <span id="oceanVolumeValue">50%</span></div>
+                <input type="range" class="ocean-volume-slider" id="oceanVolumeSlider" min="0" max="100" value="50">
+            </div>
+        </div>
+
+        <!-- Crossword Container -->
+        <div class="crossword-container" id="crosswordContainer">
+            <button class="close-crossword-btn" id="closeCrossword">✕</button>
+            
+            <div class="crossword-header">
+                ♫ Music Crossword ♫
+            </div>
+            
+            <div class="crossword-grid" id="crosswordGrid">
+                <!-- Grid will be generated by JavaScript -->
+            </div>
+
+            <div class="crossword-clues">
+                <h3>Across:</h3>
+                <div class="crossword-clue">1. Musical composition (4)</div>
+                <div class="crossword-clue">4. Loud volume marking (5)</div>
+                <h3>Down:</h3>
+                <div class="crossword-clue">1. Quiet volume marking (5)</div>
+                <div class="crossword-clue">2. Rhythm keeper (4)</div>
+                <div class="crossword-clue">3. Musical symbol (4)</div>
+            </div>
+
+            <button class="check-crossword-btn" id="checkCrossword">Check Answers</button>
+        </div>
+    </div>
+
+    <script>
+        // Audio setup
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioElement = new Audio();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audioElement);
+        
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 64;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        // State
+        let playlist = [];
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+
+        // Elements
+        const fileInput = document.getElementById('fileInput');
+        const playlistEl = document.getElementById('playlist');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const nowPlayingTrack = document.getElementById('nowPlayingTrack');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const expBar = document.getElementById('expBar');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const visualizerBars = document.querySelectorAll('.visualizer-bar');
+
+        // File handling
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (file.type.includes('audio')) {
+                    const url = URL.createObjectURL(file);
+                    playlist.push({
+                        name: file.name.replace('.mp3', ''),
+                        url: url
+                    });
+                }
+            });
+            renderPlaylist();
+            if (playlist.length === 1) {
+                loadTrack(0);
+            }
+        });
+
+        // Render playlist
+        function renderPlaylist() {
+            if (playlist.length === 0) {
+                playlistEl.innerHTML = '<div class="empty-state">Load some tracks to begin your journey...</div>';
+                return;
+            }
+
+            playlistEl.innerHTML = playlist.map((track, index) => `
+                <div class="track-item ${index === currentTrackIndex ? 'active' : ''}" data-index="${index}">
+                    <div class="track-name">${track.name}</div>
+                </div>
+            `).join('');
+
+            // Add click listeners
+            document.querySelectorAll('.track-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const index = parseInt(item.dataset.index);
+                    loadTrack(index);
+                    play();
+                });
+            });
+        }
+
+        // Load track
+        function loadTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+            
+            currentTrackIndex = index;
+            audioElement.src = playlist[index].url;
+            nowPlayingTrack.textContent = playlist[index].name;
+            renderPlaylist();
+        }
+
+        // Playback controls
+        function play() {
+            audioContext.resume();
+            audioElement.play();
+            isPlaying = true;
+            playPauseBtn.textContent = '❚❚';
+        }
+
+        function pause() {
+            audioElement.pause();
+            isPlaying = false;
+            playPauseBtn.textContent = '▶';
+        }
+
+        playPauseBtn.addEventListener('click', () => {
+            if (playlist.length === 0) return;
+            if (isPlaying) {
+                pause();
+            } else {
+                play();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            const newIndex = currentTrackIndex - 1;
+            if (newIndex >= 0) {
+                loadTrack(newIndex);
+                if (isPlaying) play();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const newIndex = currentTrackIndex + 1;
+            if (newIndex < playlist.length) {
+                loadTrack(newIndex);
+                if (isPlaying) play();
+            }
+        });
+
+        // Auto-advance to next track
+        audioElement.addEventListener('ended', () => {
+            const newIndex = currentTrackIndex + 1;
+            if (newIndex < playlist.length) {
+                loadTrack(newIndex);
+                play();
+            } else {
+                pause();
+            }
+        });
+
+        // Volume control
+        volumeSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            audioElement.volume = value / 100;
+            volumeValue.textContent = `${value}%`;
+            expBar.style.width = `${value}%`;
+        });
+
+        // Set initial volume
+        audioElement.volume = 0.7;
+
+        // Time display
+        audioElement.addEventListener('timeupdate', () => {
+            const current = formatTime(audioElement.currentTime);
+            const duration = formatTime(audioElement.duration);
+            timeDisplay.textContent = `${current} / ${duration}`;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Visualizer
+        function updateVisualizer() {
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Sample every other frequency bin for the bars
+            visualizerBars.forEach((bar, i) => {
+                const index = Math.floor(i * (bufferLength / visualizerBars.length));
+                const value = dataArray[index];
+                const height = (value / 255) * 60 + 8;
+                bar.style.height = `${height}px`;
+            });
+
+            requestAnimationFrame(updateVisualizer);
+        }
+
+        updateVisualizer();
+
+        // Time and Date Display
+        const currentTimeEl = document.getElementById('currentTime');
+        const currentDayEl = document.getElementById('currentDay');
+        const currentDateEl = document.getElementById('currentDate');
+
+        function updateTimeAndDate() {
+            const now = new Date();
+            
+            // Time
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Day of week
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            currentDayEl.textContent = days[now.getDay()];
+            
+            // Date
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[now.getMonth()];
+            const day = now.getDate();
+            const year = now.getFullYear();
+            currentDateEl.textContent = `${month} ${day}, ${year}`;
+        }
+
+        setInterval(updateTimeAndDate, 1000);
+        updateTimeAndDate();
+
+        // Sticky Note Functionality
+        const stickyNoteBtn = document.getElementById('stickyNoteBtn');
+        let stickyNoteCounter = 0;
+        const colors = ['yellow', 'pink', 'blue', 'green', 'purple'];
+
+        stickyNoteBtn.addEventListener('click', () => {
+            createStickyNote();
+        });
+
+        function createStickyNote() {
+            const note = document.createElement('div');
+            const noteId = `note-${Date.now()}`;
+            note.id = noteId;
+            note.className = `sticky-note ${colors[stickyNoteCounter % colors.length]}`;
+            
+            // Random position
+            const randomTop = 150 + Math.random() * 200;
+            const randomLeft = 200 + Math.random() * 400;
+            note.style.top = randomTop + 'px';
+            note.style.left = randomLeft + 'px';
+            
+            note.innerHTML = `
+                <div class="sticky-note-header" data-note-id="${noteId}">
+                    <div class="sticky-note-title">📝 Note</div>
+                    <button class="sticky-note-delete" onclick="deleteStickyNote('${noteId}')">✕</button>
+                </div>
+                <textarea class="sticky-note-content" placeholder="Type your note here..."></textarea>
+            `;
+            
+            document.body.appendChild(note);
+            stickyNoteCounter++;
+            
+            // Make draggable
+            makeDraggable(note, note.querySelector('.sticky-note-header'));
+            
+            // Focus the textarea
+            note.querySelector('textarea').focus();
+        }
+
+        window.deleteStickyNote = function(noteId) {
+            const note = document.getElementById(noteId);
+            if (note) {
+                note.remove();
+            }
+        };
+
+        function makeDraggable(element, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            handle.onmousedown = dragMouseDown;
+            handle.ontouchstart = dragTouchStart;
+            
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function dragTouchStart(e) {
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+                document.ontouchend = closeDragElement;
+                document.ontouchmove = elementTouchDrag;
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function elementTouchDrag(e) {
+                pos1 = pos3 - e.touches[0].clientX;
+                pos2 = pos4 - e.touches[0].clientY;
+                pos3 = e.touches[0].clientX;
+                pos4 = e.touches[0].clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+            }
+        }
+
+        // Timer Widget - Draggable Functionality
+        const timerToggleBtn = document.getElementById('timerToggleBtn');
+        const timerWidget = document.getElementById('timerWidget');
+        const closeTimerBtn = document.getElementById('closeTimerBtn');
+        const timerWidgetHeader = document.getElementById('timerWidgetHeader');
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        timerToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            timerWidget.classList.add('active');
+        });
+
+        closeTimerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            timerWidget.classList.remove('active');
+        });
+
+        // Drag functionality
+        timerWidgetHeader.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        // Touch support
+        timerWidgetHeader.addEventListener('touchstart', dragStart);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', dragEnd);
+
+        function dragStart(e) {
+            if (e.type === 'touchstart') {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+
+            if (e.target === timerWidgetHeader || timerWidgetHeader.contains(e.target)) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                if (e.type === 'touchmove') {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, timerWidget);
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+
+        // Timer Tabs
+        const timerTabs = document.querySelectorAll('.timer-tab');
+        const timerContents = document.querySelectorAll('.timer-content');
+
+        timerTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                timerTabs.forEach(t => t.classList.remove('active'));
+                timerContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabName = tab.dataset.tab;
+                document.getElementById(`${tabName}Content`).classList.add('active');
+            });
+        });
+
+        // Timer Functionality
+        let timerInterval = null;
+        let timerRemaining = 0;
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerMinutes = document.getElementById('timerMinutes');
+        const timerSeconds = document.getElementById('timerSeconds');
+        const timerStart = document.getElementById('timerStart');
+        const timerReset = document.getElementById('timerReset');
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerRemaining / 60);
+            const secs = timerRemaining % 60;
+            timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function playTimerTick() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.frequency.value = 1200;
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.05);
+            } catch (e) {
+                console.log('Audio context error:', e);
+            }
+        }
+
+        timerStart.addEventListener('click', () => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerStart.textContent = 'Start';
+            } else {
+                if (timerRemaining === 0) {
+                    timerRemaining = parseInt(timerMinutes.value) * 60 + parseInt(timerSeconds.value);
+                }
+                
+                timerInterval = setInterval(() => {
+                    timerRemaining--;
+                    updateTimerDisplay();
+                    playTimerTick(); // Play tick sound
+                    
+                    if (timerRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        timerStart.textContent = 'Start';
+                        playAlarmSound('beep');
+                        alert('⏰ Timer finished!');
+                    }
+                }, 1000);
+                
+                timerStart.textContent = 'Pause';
+            }
+        });
+
+        timerReset.addEventListener('click', () => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerRemaining = 0;
+            timerStart.textContent = 'Start';
+            updateTimerDisplay();
+        });
+
+        // Alarm Functionality
+        const alarmDisplay = document.getElementById('alarmDisplay');
+        const alarmTime = document.getElementById('alarmTime');
+        const alarmSound = document.getElementById('alarmSound');
+        const alarmAdd = document.getElementById('alarmAdd');
+        const alarmList = document.getElementById('alarmList');
+        let alarms = [];
+        let alarmCheckInterval = null;
+
+        function updateAlarmDisplay() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            alarmDisplay.textContent = `${hours}:${minutes}`;
+        }
+
+        setInterval(updateAlarmDisplay, 1000);
+        updateAlarmDisplay();
+
+        alarmAdd.addEventListener('click', () => {
+            const time = alarmTime.value;
+            const sound = alarmSound.value;
+            
+            if (time) {
+                const alarm = { id: Date.now(), time, sound, active: true };
+                alarms.push(alarm);
+                renderAlarms();
+                
+                if (!alarmCheckInterval) {
+                    alarmCheckInterval = setInterval(checkAlarms, 1000);
+                }
+            }
+        });
+
+        function renderAlarms() {
+            alarmList.innerHTML = alarms.map(alarm => `
+                <div class="alarm-item">
+                    <span>⏰ ${alarm.time} (${alarm.sound})</span>
+                    <button class="delete-alarm-btn" onclick="deleteAlarm(${alarm.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        window.deleteAlarm = function(id) {
+            alarms = alarms.filter(a => a.id !== id);
+            renderAlarms();
+            
+            if (alarms.length === 0 && alarmCheckInterval) {
+                clearInterval(alarmCheckInterval);
+                alarmCheckInterval = null;
+            }
+        };
+
+        function checkAlarms() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            alarms.forEach(alarm => {
+                if (alarm.active && alarm.time === currentTime) {
+                    playAlarmSound(alarm.sound);
+                    alert(`⏰ Alarm: ${alarm.time}`);
+                    alarm.active = false;
+                    setTimeout(() => { alarm.active = true; }, 61000); // Reactivate after 1 minute
+                }
+            });
+        }
+
+        function playAlarmSound(soundType) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (soundType === 'beep') {
+                oscillator.frequency.value = 800;
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } else if (soundType === 'chime') {
+                [523, 659, 784].forEach((freq, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.2 + 0.3);
+                    osc.start(audioCtx.currentTime + i * 0.2);
+                    osc.stop(audioCtx.currentTime + i * 0.2 + 0.3);
+                });
+            } else if (soundType === 'bell') {
+                oscillator.frequency.value = 1000;
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 1);
+            }
+        }
+
+        // Stopwatch Functionality
+        let stopwatchInterval = null;
+        let stopwatchTime = 0;
+        let laps = [];
+
+        const stopwatchDisplay = document.getElementById('stopwatchDisplay');
+        const stopwatchStart = document.getElementById('stopwatchStart');
+        const stopwatchLap = document.getElementById('stopwatchLap');
+        const stopwatchReset = document.getElementById('stopwatchReset');
+        const lapList = document.getElementById('lapList');
+
+        // Adjust stopwatch display font size to fit
+        stopwatchDisplay.style.fontSize = '24px';
+        stopwatchDisplay.style.letterSpacing = '2px';
+
+        function updateStopwatchDisplay() {
+            const mins = Math.floor(stopwatchTime / 6000);
+            const secs = Math.floor((stopwatchTime % 6000) / 100);
+            const centisecs = stopwatchTime % 100;
+            stopwatchDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(centisecs).padStart(2, '0')}`;
+        }
+
+        stopwatchStart.addEventListener('click', () => {
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+                stopwatchStart.textContent = 'Start';
+            } else {
+                stopwatchInterval = setInterval(() => {
+                    stopwatchTime++;
+                    updateStopwatchDisplay();
+                }, 10);
+                stopwatchStart.textContent = 'Pause';
+            }
+        });
+
+        stopwatchLap.addEventListener('click', () => {
+            if (stopwatchInterval) {
+                const lapTime = stopwatchDisplay.textContent;
+                laps.push(lapTime);
+                renderLaps();
+            }
+        });
+
+        stopwatchReset.addEventListener('click', () => {
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+            }
+            stopwatchTime = 0;
+            laps = [];
+            stopwatchStart.textContent = 'Start';
+            updateStopwatchDisplay();
+            renderLaps();
+        });
+
+        function renderLaps() {
+            lapList.innerHTML = laps.map((lap, i) => `
+                <div class="lap-item">Lap ${i + 1}: ${lap}</div>
+            `).join('');
+        }
+
+        // Minimize/Restore functionality
+        const minimizeBtn = document.getElementById('minimizeBtn');
+        const restoreBtn = document.getElementById('restoreBtn');
+        const playerContainer = document.getElementById('playerContainer');
+
+        minimizeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playerContainer.classList.add('minimized');
+            restoreBtn.classList.add('visible');
+        });
+
+        restoreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playerContainer.classList.remove('minimized');
+            restoreBtn.classList.remove('visible');
+        });
+
+        // Ocean Sounds functionality
+        const oceanSoundsToggle = document.getElementById('oceanSoundsToggle');
+        const oceanSoundsContainer = document.getElementById('oceanSoundsContainer');
+        const closeOceanSounds = document.getElementById('closeOceanSounds');
+        const oceanSoundOptions = document.querySelectorAll('.ocean-sound-option');
+        const oceanVolumeSlider = document.getElementById('oceanVolumeSlider');
+        const oceanVolumeValue = document.getElementById('oceanVolumeValue');
+
+        let currentOceanAudio = null;
+        
+        // Ocean sound file mappings
+        const oceanSoundFiles = {
+            'waves': '/mnt/user-data/uploads/freesound_community-water-ocean-waves-01-58360.mp3',
+            'storm': '/mnt/user-data/uploads/richardmultimedia-ocean-waves-250310.mp3',
+            'seagulls': '/mnt/user-data/uploads/solarmusic-ocean-waves-112906.mp3',
+            'underwater': '/mnt/user-data/uploads/soundsforyou-ocean-sea-soft-waves-121349.mp3',
+            'beach': '/mnt/user-data/uploads/freesound_community-water-ocean-waves-01-58360.mp3'
+        };
+
+        oceanSoundsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            oceanSoundsContainer.classList.add('active');
+        });
+
+        closeOceanSounds.addEventListener('click', (e) => {
+            e.stopPropagation();
+            oceanSoundsContainer.classList.remove('active');
+        });
+
+        function stopOceanSound() {
+            if (currentOceanAudio) {
+                currentOceanAudio.pause();
+                currentOceanAudio.currentTime = 0;
+                currentOceanAudio = null;
+            }
+        }
+
+        function playOceanSound(soundType) {
+            stopOceanSound();
+            
+            if (soundType === 'off') {
+                return;
+            }
+
+            if (oceanSoundFiles[soundType]) {
+                currentOceanAudio = new Audio(oceanSoundFiles[soundType]);
+                currentOceanAudio.loop = true;
+                currentOceanAudio.volume = oceanVolumeSlider.value / 100;
+                currentOceanAudio.play().catch(err => {
+                    console.log('Ocean sound playback error:', err);
+                });
+            }
+        }
+
+        oceanSoundOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                oceanSoundOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                const soundType = option.dataset.sound;
+                playOceanSound(soundType);
+            });
+        });
+
+        oceanVolumeSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            oceanVolumeValue.textContent = `${value}%`;
+            if (currentOceanAudio) {
+                currentOceanAudio.volume = value / 100;
+            }
+        });
+
+        // Crossword toggle functionality - set up first
+        const crosswordToggle = document.getElementById('crosswordToggle');
+        const crosswordContainer = document.getElementById('crosswordContainer');
+        const closeCrossword = document.getElementById('closeCrossword');
+
+        crosswordToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            crosswordContainer.classList.add('active');
+            console.log('Crossword opened');
+        });
+
+        closeCrossword.addEventListener('click', (e) => {
+            e.stopPropagation();
+            crosswordContainer.classList.remove('active');
+            console.log('Crossword closed');
+        });
+
+        // Button click sound effect (thock/thump)
+        function playClickSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                // Create a deep "thock" sound
+                oscillator.frequency.setValueAtTime(80, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.15);
+            } catch (e) {
+                console.log('Audio context error:', e);
+            }
+        }
+
+        // Add click sound to all buttons (after a short delay to ensure handlers are set)
+        setTimeout(() => {
+            const allButtons = document.querySelectorAll('button, .load-disk-btn');
+            allButtons.forEach(button => {
+                button.addEventListener('click', playClickSound, { capture: false });
+            });
+        }, 100);
+
+        // Crossword Minigame
+        const crosswordGrid = document.getElementById('crosswordGrid');
+        const checkCrosswordBtn = document.getElementById('checkCrossword');
+
+        // Crossword puzzle layout (7x7 grid)
+        // 0 = blocked, letter = answer
+        const crosswordLayout = [
+            ['S', 'O', 'N', 'G', '0', '0', '0'],
+            ['0', '0', 'O', '0', '0', '0', '0'],
+            ['0', '0', 'T', '0', 'F', 'O', 'R'],
+            ['P', 'I', 'E', 'A', 'T', '0', '0'],
+            ['0', '0', '0', '0', 'E', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0'],
+            ['0', '0', '0', '0', '0', '0', '0']
+        ];
+
+        // Cell numbers for clues
+        const cellNumbers = {
+            '0,0': '1',  // SONG (across) and PIANO (down - starts at S)
+            '3,0': '1',  // PIANO (down) - P at row 3
+            '2,4': '4',  // FORTE (across)
+            '0,2': '2',  // NOTE (down)
+            '3,3': '3'   // BEAT (down)
+        };
+
+        // Generate crossword grid
+        for (let row = 0; row < 7; row++) {
+            for (let col = 0; col < 7; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'crossword-cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.dataset.answer = crosswordLayout[row][col];
+
+                if (crosswordLayout[row][col] === '0') {
+                    cell.classList.add('blocked');
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    
+                    // Add cell number if it's a clue start
+                    const key = `${row},${col}`;
+                    if (cellNumbers[key]) {
+                        const number = document.createElement('span');
+                        number.className = 'cell-number';
+                        number.textContent = cellNumbers[key];
+                        cell.appendChild(number);
+                    }
+                    
+                    // Auto-advance to next cell
+                    input.addEventListener('input', (e) => {
+                        const val = e.target.value.toUpperCase();
+                        e.target.value = val;
+                        
+                        if (val.length === 1) {
+                            // Move to next available cell
+                            let nextCol = col + 1;
+                            let nextRow = row;
+                            
+                            while (nextRow < 7) {
+                                while (nextCol < 7) {
+                                    const nextCell = document.querySelector(`[data-row="${nextRow}"][data-col="${nextCol}"]`);
+                                    if (nextCell && !nextCell.classList.contains('blocked')) {
+                                        nextCell.querySelector('input')?.focus();
+                                        return;
+                                    }
+                                    nextCol++;
+                                }
+                                nextRow++;
+                                nextCol = 0;
+                            }
+                        }
+                    });
+                    
+                    cell.appendChild(input);
+                }
+
+                crosswordGrid.appendChild(cell);
+            }
+        }
+
+        // Check answers
+        checkCrosswordBtn.addEventListener('click', () => {
+            let allCorrect = true;
+            const cells = document.querySelectorAll('.crossword-cell:not(.blocked)');
+            
+            cells.forEach(cell => {
+                const input = cell.querySelector('input');
+                const answer = cell.dataset.answer;
+                const userAnswer = input.value.toUpperCase();
+                
+                if (userAnswer === answer) {
+                    cell.classList.add('correct');
+                } else {
+                    cell.classList.remove('correct');
+                    if (userAnswer !== '') {
+                        allCorrect = false;
+                    }
+                }
+            });
+
+            if (allCorrect && cells.length > 0) {
+                const allFilled = Array.from(cells).every(cell => 
+                    cell.querySelector('input').value.trim() !== ''
+                );
+                
+                if (allFilled) {
+                    setTimeout(() => {
+                        alert('🎵 Perfect! You solved the crossword! 🎵');
+                    }, 500);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
